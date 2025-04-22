@@ -24,16 +24,26 @@ if [[ "$CODENAME" != "bullseye" && "$CODENAME" != "bookworm" ]]; then
     exit 1
 fi
 
-# Импорт ключа MongoDB
-sudo mkdir -p /usr/share/keyrings
-if ! curl -fsSL https://www.mongodb.org/static/pgp/server-6.0.asc | sudo gpg --dearmor -o /usr/share/keyrings/mongodb.gpg; then
-    echo "Ошибка: не удалось импортировать ключ MongoDB."
-    exit 1
+# Импорт ключа MongoDB (перезаписывать ключ не нужно, если он уже есть)
+KEYRING_PATH="/usr/share/keyrings/mongodb.gpg"
+if [ ! -f "$KEYRING_PATH" ]; then
+    sudo mkdir -p /usr/share/keyrings
+    if ! curl -fsSL https://www.mongodb.org/static/pgp/server-6.0.asc | sudo gpg --dearmor -o "$KEYRING_PATH"; then
+        echo "Ошибка: не удалось импортировать ключ MongoDB."
+        exit 1
+    fi
+else
+    echo "Ключ MongoDB уже существует: $KEYRING_PATH"
 fi
 
-# Добавление репозитория MongoDB
+# Добавление репозитория MongoDB (перезаписывать файл только если его нет)
 MONGO_LIST="/etc/apt/sources.list.d/mongodb-org-6.0.list"
-echo "deb [arch=${ARCH} signed-by=/usr/share/keyrings/mongodb.gpg] https://repo.mongodb.org/apt/debian ${CODENAME}/mongodb-org/6.0 main" | sudo tee "${MONGO_LIST}"
+REPO_LINE="deb [arch=${ARCH} signed-by=${KEYRING_PATH}] https://repo.mongodb.org/apt/debian ${CODENAME}/mongodb-org/6.0 main"
+if ! grep -Fxq "$REPO_LINE" "$MONGO_LIST" 2>/dev/null; then
+    echo "$REPO_LINE" | sudo tee "$MONGO_LIST"
+else
+    echo "Репозиторий MongoDB уже добавлен: $MONGO_LIST"
+fi
 
 # Проверка доступности репозитория
 if ! curl -fsSL "https://repo.mongodb.org/apt/debian/dists/${CODENAME}/mongodb-org/6.0/Release" > /dev/null; then
@@ -56,8 +66,16 @@ if ! apt-cache policy mongodb-org | grep -q 'Candidate:'; then
     echo "Возможные причины:"
     echo "  - Для вашей версии Debian (${CODENAME}) ещё нет пакета mongodb-org 6.0."
     echo "  - Репозиторий MongoDB не добавлен или недоступен."
-    echo "  - Проверьте содержимое файла ${MONGO_LIST} и наличие файла /usr/share/keyrings/mongodb.gpg."
+    echo "  - Проверьте содержимое файла ${MONGO_LIST} и наличие файла ${KEYRING_PATH}."
     echo "  - Проверьте вручную: https://repo.mongodb.org/apt/debian/dists/${CODENAME}/mongodb-org/6.0/"
+    echo ""
+    echo "Проверьте, что файл ${MONGO_LIST} содержит строку:"
+    echo "  $REPO_LINE"
+    echo ""
+    echo "Проверьте, что ключ существует:"
+    echo "  ls -l ${KEYRING_PATH}"
+    echo ""
+    echo "Если проблема сохраняется, попробуйте удалить файл ${MONGO_LIST} и повторить запуск скрипта."
     exit 1
 fi
 
