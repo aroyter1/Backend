@@ -7,6 +7,23 @@ if ! command -v lsb_release &> /dev/null; then
     exit 1
 fi
 
+# Определение дистрибутива и версии
+DISTRO=$(lsb_release -is | tr '[:upper:]' '[:lower:]')
+CODENAME=$(lsb_release -cs)
+ARCH=$(dpkg --print-architecture)
+
+# Проверка поддерживаемых версий Ubuntu
+if [[ "$DISTRO" != "ubuntu" ]]; then
+    echo "Ошибка: данный скрипт поддерживает только Ubuntu."
+    exit 1
+fi
+
+if [[ "$CODENAME" != "focal" && "$CODENAME" != "jammy" ]]; then
+    echo "Ошибка: поддерживаются только Ubuntu 20.04 (focal) и 22.04 (jammy)."
+    echo "Ваш дистрибутив: $CODENAME"
+    exit 1
+fi
+
 # Импорт ключа MongoDB
 sudo mkdir -p /usr/share/keyrings
 if ! curl -fsSL https://www.mongodb.org/static/pgp/server-6.0.asc | sudo gpg --dearmor -o /usr/share/keyrings/mongodb.gpg; then
@@ -16,9 +33,14 @@ fi
 
 # Добавление репозитория MongoDB
 MONGO_LIST="/etc/apt/sources.list.d/mongodb-org-6.0.list"
-ARCH=$(dpkg --print-architecture)
-DISTRO=$(lsb_release -cs)
-echo "deb [arch=${ARCH} signed-by=/usr/share/keyrings/mongodb.gpg] https://repo.mongodb.org/apt/ubuntu ${DISTRO}/mongodb-org/6.0 multiverse" | sudo tee "${MONGO_LIST}"
+echo "deb [arch=${ARCH} signed-by=/usr/share/keyrings/mongodb.gpg] https://repo.mongodb.org/apt/ubuntu ${CODENAME}/mongodb-org/6.0 multiverse" | sudo tee "${MONGO_LIST}"
+
+# Проверка доступности репозитория
+if ! curl -fsSL "https://repo.mongodb.org/apt/ubuntu/dists/${CODENAME}/mongodb-org/6.0/Release" > /dev/null; then
+    echo "Ошибка: репозиторий MongoDB для ${CODENAME} не найден или недоступен."
+    echo "Проверьте, что вы используете поддерживаемую версию Ubuntu (20.04 focal или 22.04 jammy)."
+    exit 1
+fi
 
 # Обновление списка пакетов
 if ! sudo apt-get update; then
