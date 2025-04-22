@@ -1,9 +1,9 @@
 
-# Установка MongoDB Community Edition на Debian/Ubuntu
+# Установка MongoDB Community Edition на Debian
 
-# Проверка, что скрипт выполняется на Ubuntu/Debian
+# Проверка, что скрипт выполняется на Debian
 if ! command -v lsb_release &> /dev/null; then
-    echo "Ошибка: lsb_release не найден. Убедитесь, что вы используете Ubuntu или Debian."
+    echo "Ошибка: lsb_release не найден. Убедитесь, что вы используете Debian."
     exit 1
 fi
 
@@ -12,14 +12,14 @@ DISTRO=$(lsb_release -is | tr '[:upper:]' '[:lower:]')
 CODENAME=$(lsb_release -cs)
 ARCH=$(dpkg --print-architecture)
 
-# Проверка поддерживаемых версий Ubuntu
-if [[ "$DISTRO" != "ubuntu" ]]; then
-    echo "Ошибка: данный скрипт поддерживает только Ubuntu."
+# Проверка поддерживаемых версий Debian
+if [[ "$DISTRO" != "debian" ]]; then
+    echo "Ошибка: данный скрипт поддерживает только Debian."
     exit 1
 fi
 
-if [[ "$CODENAME" != "focal" && "$CODENAME" != "jammy" ]]; then
-    echo "Ошибка: поддерживаются только Ubuntu 20.04 (focal) и 22.04 (jammy)."
+if [[ "$CODENAME" != "bullseye" && "$CODENAME" != "bookworm" ]]; then
+    echo "Ошибка: поддерживаются только Debian 11 (bullseye) и 12 (bookworm)."
     echo "Ваш дистрибутив: $CODENAME"
     exit 1
 fi
@@ -33,12 +33,12 @@ fi
 
 # Добавление репозитория MongoDB
 MONGO_LIST="/etc/apt/sources.list.d/mongodb-org-6.0.list"
-echo "deb [arch=${ARCH} signed-by=/usr/share/keyrings/mongodb.gpg] https://repo.mongodb.org/apt/ubuntu ${CODENAME}/mongodb-org/6.0 multiverse" | sudo tee "${MONGO_LIST}"
+echo "deb [arch=${ARCH} signed-by=/usr/share/keyrings/mongodb.gpg] https://repo.mongodb.org/apt/debian ${CODENAME}/mongodb-org/6.0 main" | sudo tee "${MONGO_LIST}"
 
 # Проверка доступности репозитория
-if ! curl -fsSL "https://repo.mongodb.org/apt/ubuntu/dists/${CODENAME}/mongodb-org/6.0/Release" > /dev/null; then
+if ! curl -fsSL "https://repo.mongodb.org/apt/debian/dists/${CODENAME}/mongodb-org/6.0/Release" > /dev/null; then
     echo "Ошибка: репозиторий MongoDB для ${CODENAME} не найден или недоступен."
-    echo "Проверьте, что вы используете поддерживаемую версию Ubuntu (20.04 focal или 22.04 jammy)."
+    echo "Проверьте, что вы используете поддерживаемую версию Debian (11 bullseye или 12 bookworm)."
     exit 1
 fi
 
@@ -66,5 +66,5 @@ else
     echo "Ошибка: служба mongod не найдена. Проверьте, что пакет mongodb-org установлен корректно."
     echo "Возможные причины: неподдерживаемая версия ОС или проблемы с репозиторием."
     echo "Попробуйте выполнить команду 'apt-cache search mongodb' и убедитесь, что пакет mongodb-org доступен."
-    echo "Также проверьте, что вы используете поддерживаемую версию Ubuntu (например, 20.04 или 22.04)."
+    echo "Также проверьте, что вы используете поддерживаемую версию Debian (например, 11 или 12)."
 fi
