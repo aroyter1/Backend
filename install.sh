@@ -37,8 +37,11 @@ fi
 # Добавление репозитория MongoDB (только если ещё не добавлен)
 MONGO_LIST="/etc/apt/sources.list.d/mongodb-org-6.0.list"
 REPO_LINE="deb [arch=${ARCH} signed-by=${KEYRING_PATH}] https://repo.mongodb.org/apt/debian bookworm/mongodb-org/6.0 main"
-if ! grep -Fxq "$REPO_LINE" "$MONGO_LIST" 2>/dev/null; then
-    echo "$REPO_LINE" | sudo tee "$MONGO_LIST"
+
+# Проверяем, есть ли уже нужная строка в файле, иначе добавляем
+if [ ! -f "$MONGO_LIST" ] || ! grep -Fxq "$REPO_LINE" "$MONGO_LIST"; then
+    echo "$REPO_LINE" | sudo tee "$MONGO_LIST" > /dev/null
+    echo "Репозиторий MongoDB добавлен: $MONGO_LIST"
 else
     echo "Репозиторий MongoDB уже добавлен: $MONGO_LIST"
 fi
