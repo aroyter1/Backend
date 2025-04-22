@@ -24,15 +24,15 @@ if [[ "$CODENAME" != "bookworm" ]]; then
 fi
 
 # Импорт ключа MongoDB (если ещё не импортирован)
-KEYRING_PATH="/usr/share/keyrings/mongodb.gpg"
+KEYRING_PATH="/usr/share/keyrings/mongodb-server-6.0.gpg"
 if [ ! -f "$KEYRING_PATH" ]; then
     sudo mkdir -p /usr/share/keyrings
-    curl -fsSL https://www.mongodb.org/static/pgp/server-6.0.asc | sudo gpg --dearmor -o "$KEYRING_PATH"
+    curl -fsSL https://pgp.mongodb.com/server-6.0.asc | sudo gpg --dearmor -o "$KEYRING_PATH"
 fi
 
 # Добавление репозитория MongoDB (только если ещё не добавлен)
 MONGO_LIST="/etc/apt/sources.list.d/mongodb-org-6.0.list"
-REPO_LINE="deb [arch=${ARCH} signed-by=${KEYRING_PATH}] https://repo.mongodb.org/apt/debian bookworm/mongodb-org/6.0 main"
+REPO_LINE="deb [ arch=${ARCH} signed-by=${KEYRING_PATH} ] https://repo.mongodb.org/apt/debian bookworm/mongodb-org/6.0 main"
 
 # Проверяем, есть ли уже нужная строка в файле, иначе добавляем
 if [ ! -f "$MONGO_LIST" ] || ! grep -Fxq "$REPO_LINE" "$MONGO_LIST"; then
@@ -41,6 +41,12 @@ fi
 
 # Обновление списка пакетов
 sudo apt-get update
+
+# Проверка наличия пакета mongodb-org в списке доступных
+if ! apt-cache policy mongodb-org | grep -q 'Candidate:'; then
+    echo "Ошибка: пакет mongodb-org не найден в репозитории. Проверьте правильность добавления репозитория и ключа."
+    exit 1
+fi
 
 # Установка пакетов MongoDB
 sudo apt-get install -y mongodb-org
