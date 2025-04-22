@@ -1,7 +1,7 @@
 {
-  "name": "korotkoссылка-backend",
+  "name": "short-backend",
   "version": "1.0.0",
-  "description": "Бэкенд для сервиса сокращения ссылок и генерации QR-кодов",
+  "description": "Backend for URL shortener and QR code generator",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
