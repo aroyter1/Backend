@@ -45,6 +45,14 @@ else
     echo "Репозиторий MongoDB уже добавлен: $MONGO_LIST"
 fi
 
+# Проверка содержимого файла репозитория
+if ! grep -Fxq "$REPO_LINE" "$MONGO_LIST"; then
+    echo "Ошибка: строка репозитория не найдена в $MONGO_LIST"
+    echo "Текущее содержимое файла:"
+    cat "$MONGO_LIST"
+    exit 1
+fi
+
 # Проверка доступности репозитория
 if ! curl -fsSL "https://repo.mongodb.org/apt/debian/dists/${CODENAME}/mongodb-org/6.0/Release" > /dev/null; then
     echo "Ошибка: репозиторий MongoDB для ${CODENAME} не найден или недоступен."
