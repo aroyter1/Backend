@@ -39,12 +39,25 @@ echo "deb [arch=${ARCH} signed-by=/usr/share/keyrings/mongodb.gpg] https://repo.
 if ! curl -fsSL "https://repo.mongodb.org/apt/debian/dists/${CODENAME}/mongodb-org/6.0/Release" > /dev/null; then
     echo "Ошибка: репозиторий MongoDB для ${CODENAME} не найден или недоступен."
     echo "Проверьте, что вы используете поддерживаемую версию Debian (11 bullseye или 12 bookworm)."
+    echo "Возможно, для вашей версии Debian ещё нет пакетов MongoDB 6.0."
+    echo "Проверьте наличие пакетов вручную: https://repo.mongodb.org/apt/debian/dists/${CODENAME}/mongodb-org/6.0/"
     exit 1
 fi
 
 # Обновление списка пакетов
 if ! sudo apt-get update; then
     echo "Ошибка: не удалось обновить список пакетов. Проверьте подключение к интернету и репозитории."
+    exit 1
+fi
+
+# Проверка наличия пакета mongodb-org в репозитории
+if ! apt-cache policy mongodb-org | grep -q 'Candidate:'; then
+    echo "Ошибка: пакет mongodb-org не найден в репозиториях apt."
+    echo "Возможные причины:"
+    echo "  - Для вашей версии Debian (${CODENAME}) ещё нет пакета mongodb-org 6.0."
+    echo "  - Репозиторий MongoDB не добавлен или недоступен."
+    echo "  - Проверьте содержимое файла ${MONGO_LIST} и наличие файла /usr/share/keyrings/mongodb.gpg."
+    echo "  - Проверьте вручную: https://repo.mongodb.org/apt/debian/dists/${CODENAME}/mongodb-org/6.0/"
     exit 1
 fi
 
