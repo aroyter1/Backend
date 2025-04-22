@@ -1,30 +1,28 @@
 
-# Установка MongoDB Community Edition на Debian
+# Установка MongoDB Community Edition на Debian GNU/Linux 12 (bookworm)
 
-# Проверка, что скрипт выполняется на Debian
+# Проверка, что скрипт выполняется на Debian GNU/Linux 12
 if ! command -v lsb_release &> /dev/null; then
-    echo "Ошибка: lsb_release не найден. Убедитесь, что вы используете Debian."
+    echo "Ошибка: lsb_release не найден. Убедитесь, что вы используете Debian GNU/Linux."
     exit 1
 fi
 
-# Определение дистрибутива и версии
 DISTRO=$(lsb_release -is | tr '[:upper:]' '[:lower:]')
 CODENAME=$(lsb_release -cs)
 ARCH=$(dpkg --print-architecture)
 
-# Проверка поддерживаемых версий Debian
 if [[ "$DISTRO" != "debian" ]]; then
-    echo "Ошибка: данный скрипт поддерживает только Debian."
+    echo "Ошибка: данный скрипт поддерживает только Debian GNU/Linux."
     exit 1
 fi
 
-if [[ "$CODENAME" != "bullseye" && "$CODENAME" != "bookworm" ]]; then
-    echo "Ошибка: поддерживаются только Debian 11 (bullseye) и 12 (bookworm)."
+if [[ "$CODENAME" != "bookworm" ]]; then
+    echo "Ошибка: поддерживается только Debian GNU/Linux 12 (bookworm)."
     echo "Ваш дистрибутив: $CODENAME"
     exit 1
 fi
 
-# Импорт ключа MongoDB (перезаписывать ключ не нужно, если он уже есть)
+# Импорт ключа MongoDB (если ещё не импортирован)
 KEYRING_PATH="/usr/share/keyrings/mongodb.gpg"
 if [ ! -f "$KEYRING_PATH" ]; then
     sudo mkdir -p /usr/share/keyrings
@@ -36,9 +34,9 @@ else
     echo "Ключ MongoDB уже существует: $KEYRING_PATH"
 fi
 
-# Добавление репозитория MongoDB (перезаписывать файл только если его нет)
+# Добавление репозитория MongoDB (только если ещё не добавлен)
 MONGO_LIST="/etc/apt/sources.list.d/mongodb-org-6.0.list"
-REPO_LINE="deb [arch=${ARCH} signed-by=${KEYRING_PATH}] https://repo.mongodb.org/apt/debian ${CODENAME}/mongodb-org/6.0 main"
+REPO_LINE="deb [arch=${ARCH} signed-by=${KEYRING_PATH}] https://repo.mongodb.org/apt/debian bookworm/mongodb-org/6.0 main"
 if ! grep -Fxq "$REPO_LINE" "$MONGO_LIST" 2>/dev/null; then
     echo "$REPO_LINE" | sudo tee "$MONGO_LIST"
 else
@@ -54,11 +52,9 @@ if ! grep -Fxq "$REPO_LINE" "$MONGO_LIST"; then
 fi
 
 # Проверка доступности репозитория
-if ! curl -fsSL "https://repo.mongodb.org/apt/debian/dists/${CODENAME}/mongodb-org/6.0/Release" > /dev/null; then
-    echo "Ошибка: репозиторий MongoDB для ${CODENAME} не найден или недоступен."
-    echo "Проверьте, что вы используете поддерживаемую версию Debian (11 bullseye или 12 bookworm)."
-    echo "Возможно, для вашей версии Debian ещё нет пакетов MongoDB 6.0."
-    echo "Проверьте наличие пакетов вручную: https://repo.mongodb.org/apt/debian/dists/${CODENAME}/mongodb-org/6.0/"
+if ! curl -fsSL "https://repo.mongodb.org/apt/debian/dists/bookworm/mongodb-org/6.0/Release" > /dev/null; then
+    echo "Ошибка: репозиторий MongoDB для Debian GNU/Linux 12 (bookworm) не найден или недоступен."
+    echo "Проверьте наличие пакетов вручную: https://repo.mongodb.org/apt/debian/dists/bookworm/mongodb-org/6.0/"
     exit 1
 fi
 
@@ -72,10 +68,10 @@ fi
 if ! apt-cache policy mongodb-org | grep -q 'Candidate:'; then
     echo "Ошибка: пакет mongodb-org не найден в репозиториях apt."
     echo "Возможные причины:"
-    echo "  - Для вашей версии Debian (${CODENAME}) ещё нет пакета mongodb-org 6.0."
+    echo "  - Для вашей версии Debian (bookworm) ещё нет пакета mongodb-org 6.0."
     echo "  - Репозиторий MongoDB не добавлен или недоступен."
     echo "  - Проверьте содержимое файла ${MONGO_LIST} и наличие файла ${KEYRING_PATH}."
-    echo "  - Проверьте вручную: https://repo.mongodb.org/apt/debian/dists/${CODENAME}/mongodb-org/6.0/"
+    echo "  - Проверьте вручную: https://repo.mongodb.org/apt/debian/dists/bookworm/mongodb-org/6.0/"
     echo ""
     echo "Проверьте, что файл ${MONGO_LIST} содержит строку:"
     echo "  $REPO_LINE"
@@ -105,5 +101,5 @@ else
     echo "Ошибка: служба mongod не найдена. Проверьте, что пакет mongodb-org установлен корректно."
     echo "Возможные причины: неподдерживаемая версия ОС или проблемы с репозиторием."
     echo "Попробуйте выполнить команду 'apt-cache search mongodb' и убедитесь, что пакет mongodb-org доступен."
-    echo "Также проверьте, что вы используете поддерживаемую версию Debian (например, 11 или 12)."
+    echo "Также проверьте, что вы используете Debian GNU/Linux 12 (bookworm)."
 fi
